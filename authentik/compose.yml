@@ -1,0 +1,53 @@
+services:
+  postgresql:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PG_DB}
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASS}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    volumes:
+      - database:/var/lib/postgresql/data
+  server:
+    image: ${AUTHENTIK_IMAGE}:${AUTHENTIK_TAG}
+    command: server
+    restart: unless-stopped
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment: &authentik-env
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB}
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+    volumes:
+      - ${DATA_ROOT}/data:/data
+      - ${DATA_ROOT}/custom-templates:/templates
+    networks: [default, frontend]
+  worker:
+    image: ${AUTHENTIK_IMAGE}:${AUTHENTIK_TAG}
+    command: worker
+    restart: unless-stopped
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment: *authentik-env
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DATA_ROOT}/data:/data
+      - ${DATA_ROOT}/custom-templates:/templates
+volumes:
+  database:
+networks:
+  frontend:
+    name: ${FRONTEND_NETWORK}
+    external: true
+

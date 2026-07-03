@@ -1,0 +1,18 @@
+http:
+  services:
+    authentik:
+      loadBalancer:
+        servers:
+          - url: "{{ env `AUTHENTIK_URL` }}"
+    example-app:
+      loadBalancer:
+        servers:
+          - url: "{{ env `APP_URL` }}"
+
+tcp:
+  services:
+    authentik-ldaps:
+      loadBalancer:
+        servers:
+          - address: "{{ env `AUTHENTIK_LDAPS_ADDRESS` }}"
+

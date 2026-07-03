@@ -1,0 +1,28 @@
+services:
+  traefik:
+    image: traefik:v3.7
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    ports: ["80:80", "443:443", "636:636"]
+    environment:
+      CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
+      DOMAIN: ${DOMAIN}
+      TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_EMAIL: ${ACME_EMAIL}
+      TRAEFIK_DASHBOARD_HOST: ${TRAEFIK_DASHBOARD_HOST}
+      AUTHENTIK_HOST: ${AUTHENTIK_HOST}
+      AUTHENTIK_URL: ${AUTHENTIK_URL}
+      AUTHENTIK_LDAPS_HOST: ${AUTHENTIK_LDAPS_HOST}
+      AUTHENTIK_LDAPS_ADDRESS: ${AUTHENTIK_LDAPS_ADDRESS}
+      APP_HOST: ${APP_HOST}
+      APP_URL: ${APP_URL}
+    volumes:
+      - ./config/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./config/dynamic:/etc/traefik/dynamic:ro
+      - certs:/var/traefik/certs
+    networks: [frontend]
+volumes:
+  certs:
+networks:
+  frontend:
+    name: ${FRONTEND_NETWORK}
+    external: true

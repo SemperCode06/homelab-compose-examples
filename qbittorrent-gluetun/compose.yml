@@ -1,0 +1,30 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    restart: unless-stopped
+    cap_add: [NET_ADMIN]
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      VPN_SERVICE_PROVIDER: custom
+      VPN_TYPE: wireguard
+    volumes:
+      - ${WIREGUARD_CONFIG}:/gluetun/wireguard/wg0.conf:ro
+    ports:
+      - ${WEBUI_PORT}:8080
+      - ${TORRENT_PORT}:6881
+      - ${TORRENT_PORT}:6881/udp
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    restart: unless-stopped
+    network_mode: service:gluetun
+    depends_on: [gluetun]
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+      WEBUI_PORT: 8080
+    volumes:
+      - ${DATA_ROOT}/qbittorrent/config:/config
+      - ${DATA_ROOT}/downloads:/downloads
+

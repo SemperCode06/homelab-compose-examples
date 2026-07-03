@@ -1,0 +1,10 @@
+tcp:
+  routers:
+    authentik-ldaps:
+      rule: "HostSNI(`{{ env `AUTHENTIK_LDAPS_HOST` }}`)"
+      entryPoints:
+        - ldaps
+      service: authentik-ldaps@file
+      tls:
+        passthrough: true
+

@@ -1,0 +1,32 @@
+http:
+  routers:
+    dashboard:
+      rule: "Host(`{{ env `TRAEFIK_DASHBOARD_HOST` }}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      entryPoints:
+        - websecure
+      service: api@internal
+      middlewares:
+        - authentik@file
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "{{ env `DOMAIN` }}"
+            sans:
+              - "*.{{ env `DOMAIN` }}"
+
+    authentik:
+      rule: "Host(`{{ env `AUTHENTIK_HOST` }}`)"
+      entryPoints:
+        - websecure
+      service: authentik@file
+      tls: {}
+
+    example-app:
+      rule: "Host(`{{ env `APP_HOST` }}`)"
+      entryPoints:
+        - websecure
+      service: example-app@file
+      middlewares:
+        - authentik@file
+      tls: {}
+

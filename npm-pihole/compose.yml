@@ -1,0 +1,42 @@
+services:
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "81:81"]
+    volumes:
+      - ${DATA_ROOT}/npm/data:/data
+      - ${DATA_ROOT}/npm/letsencrypt:/etc/letsencrypt
+    networks:
+      bridge_net:
+      lan:
+        ipv4_address: ${NPM_IPV4}
+  pihole:
+    image: pihole/pihole:latest
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      WEBPASSWORD: ${PIHOLE_WEBPASSWORD}
+      DNSMASQ_LISTENING: local
+    volumes:
+      - ${DATA_ROOT}/pihole/pihole:/etc/pihole
+      - ${DATA_ROOT}/pihole/dnsmasq.d:/etc/dnsmasq.d
+    networks:
+      lan:
+        ipv4_address: ${PIHOLE_IPV4}
+    cap_add: [NET_ADMIN]
+networks:
+  bridge_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${BRIDGE_SUBNET}
+          gateway: ${BRIDGE_GATEWAY}
+  lan:
+    driver: macvlan
+    driver_opts:
+      parent: ${MACVLAN_PARENT}
+    ipam:
+      config:
+        - subnet: ${MACVLAN_SUBNET}
+          gateway: ${MACVLAN_GATEWAY}
+
